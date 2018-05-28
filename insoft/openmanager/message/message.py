@@ -1,3 +1,4 @@
+import copy
 import sys
 
 from insoft.openmanager.message.type import _MessageType
@@ -305,6 +306,13 @@ class Message:
 			return defValue
 
 		return key_value
+
+	def remove(self, key):
+		key_value = self.map_value.get(key)
+
+		if key_value != None:
+			del self.map_value[key]
+			del self.map_type[key]
 
 	def to_string(self, depth):
 		self.DEPTHS = depth
