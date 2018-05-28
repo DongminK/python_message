@@ -1,8 +1,12 @@
 import copy
 
+import struct
+
 from insoft.openmanager.message.message import Message
 from insoft.openmanager.message.packet import Packet
 from insoft.openmanager.message.packet_reader import PacketReader
+from insoft.openmanager.message.packet_writer import PacketWriter
+
 '''
 msg = Message("TEST")
 
@@ -25,7 +29,7 @@ print(msg.get_float("float"))
 
 print("\nLong")
 
-msg.set_long("long", 31412093490123480234)
+msg.set_long("long", 31412093490180234)
 print(msg.get_long_def("long", 11))
 #msg.set_str("long", "SER")
 print(msg.get_long_def("long", 11))
@@ -97,13 +101,19 @@ print(msg)
 msg_copy.set_str("copy", "copy")
 msg_copy.remove("msg_arr")
 print(msg_copy)
-
 '''
+
 
 data = b'C\x00\x00\x00\x06S\x00\x00\x00\nAGENT_INITS\x00\x00\x00\x04dateS\x00\x00\x00\nip_addressS\x00\x00\x00\x04portS\x00\x00\x00\x16versionmanager_addressS\x00\x00\x00\x13versionmanager_portS\x00\x00\x00\x0fversionmanagersS\x00\x00\x00\x0e20180524154906S\x00\x00\x00\x0f192.168.255.146I\xff\xff\xff\xffS\x00\x00\x00\r123.212.42.13I\x00\x00\x1f@V\x00\x00\x00\x01C\x00\x00\x00\x03S\x00\x00\x00\x0eVERSIONMANAGERS\x00\x00\x00\x02ipS\x00\x00\x00\x04nameS\x00\x00\x00\x04portS\x00\x00\x00\r123.212.42.13S\x00\x00\x00\x03OMCI\x00\x00\x1f@'
 
-packet = Packet()
-packet_reader = PacketReader(data)
-msg = packet_reader.parse_to_msg()
+packet_reader = PacketReader()
+msg11 = packet_reader.parse_to_msg(data)
+print(msg11)
 
-print(msg)
+packet_writer = PacketWriter()
+b_msg = packet_writer.parse_to_bytes(msg11)
+print(b_msg)
+
+packet_reader = PacketReader()
+result_msg = packet_reader.parse_to_msg(b_msg)
+print(result_msg)

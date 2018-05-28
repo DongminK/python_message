@@ -12,4 +12,18 @@ class _MessageType:
 		pass
 
 
+class _PacketType:
+
+	INTEGER = bytes("I", "utf-8")
+	FLOAT = bytes("F", "utf-8")
+	LONG = bytes("L", "utf-8")
+	STRING = bytes("S", "utf-8")
+	BYTES = bytes("B", "utf-8")
+	COMPLEX = bytes("C", "utf-8")
+	ARRAY = bytes("V", "utf-8")
+
+	def __setattr__(self, key, value):
+		pass
+
+
 

@@ -20,6 +20,15 @@ class Message:
 	def get_name(self):
 		return self.NAME
 
+	def get_field_size(self):
+		return len(self.map_value.keys())
+
+	def get_fields(self):
+		return self.map_value.keys()
+
+	def get_type(self, field):
+		return self.map_type.get(field)
+
 	def set_int(self, key, value):
 
 		if type(value) == int:
