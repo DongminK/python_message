@@ -7,20 +7,27 @@ from insoft.openmanager.message.packet_reader import PacketReader
 class Packet:
 
 	def __init__(self):
-		self.SERVER_ID = 0
-		self.FLAG = 0
-		self.REQ_ID = 0
 		self.HEADER = "INOM"
 		self.VER = "100"
 		self.TAIL = "MONI"
 
 	def get_header_size(self):
-		# SERVER_ID, FLAG, REQ_ID, HEADER, VER, DATA_LENGTH
-		header_size = 1 + 1 + 4 + 4 + 3 + 4
+		# HEADER, VER, DATA_LENGTH
+		header_size = 4 + 3 + 4
 		return header_size
 
 	def send(self, socket, data):
-		socket.send(data)
+		try:
+			b_send = bytearray()
+			b_send.extend(bytes(self.HEADER, "utf-8"))
+			b_send.extend(bytes(self.VER, "utf-8"))
+			b_send.extend(struct.pack("!i", len(data)))
+			b_send.extend(data)
+			b_send.extend(bytes(self.TAIL, "utf-8"))
+
+			socket.send(b_send)
+		except Exception as e:
+			raise e
 
 	def recv(self, socket):
 
@@ -43,10 +50,6 @@ class Packet:
 		header_data = socket.recv(header_size)
 
 		try:
-			self.SERVER_ID = struct.unpack_from("!b", header_data, 0)[0]
-			self.FLAG = struct.unpack_from("!b", header_data, 1)[0]
-			self.REQ_ID = struct.unpack_from("!i", header_data, 2)[0]
-
 			header = bytes(struct.unpack_from("!4s", header_data, 6)[0]).decode()
 
 			if header != self.HEADER:
@@ -54,8 +57,6 @@ class Packet:
 
 			self.VER = bytes(struct.unpack_from("!3s", header_data, 10)[0]).decode()
 			data_size = struct.unpack_from("!i", header_data, 13)[0]
-
-			print("DATA SIZE ", data_size)
 
 			return data_size
 

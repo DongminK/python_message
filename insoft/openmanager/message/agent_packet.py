@@ -1,60 +1,92 @@
-## PACKET
-'''
-SERVER_ID, 1
-FLAG, 1
-REQUEST_ID, 4
-
-HEADER, 4, INOM
-VER, 3, 100
-DATA_LENGTH, 4
-
-DATA, DATA_LENGTH
-	C, 1
-	FIELD_SIZE, 4
-	S, 1
-	MESSAGE_NAME, S
-
-
-TAIL, 4, MONI
-'''
-
 import struct
 
+from insoft.openmanager.message.message import Message
 from insoft.openmanager.message.packet import Packet
+from insoft.openmanager.message.packet_reader import PacketReader
 
-data = b'\x01\x00\x00\x04\x93\xe1INOM100\x00\x00\x01\x14C\x00\x00\x00\x06S\x00\x00\x00\nAGENT_INITS\x00\x00\x00\x04dateS\x00\x00\x00\nip_addressS\x00\x00\x00\x04portS\x00\x00\x00\x16versionmanager_addressS\x00\x00\x00\x13versionmanager_portS\x00\x00\x00\x0fversionmanagersS\x00\x00\x00\x0e20180524154906S\x00\x00\x00\x0f192.168.255.146I\xff\xff\xff\xffS\x00\x00\x00\r123.212.42.13I\x00\x00\x1f@V\x00\x00\x00\x01C\x00\x00\x00\x03S\x00\x00\x00\x0eVERSIONMANAGERS\x00\x00\x00\x02ipS\x00\x00\x00\x04nameS\x00\x00\x00\x04portS\x00\x00\x00\r123.212.42.13S\x00\x00\x00\x03OMCI\x00\x00\x1f@MONI'
+
+class AgentPacket(Packet):
+
+	def __init__(self):
+		Packet.__init__(self)
+		self.SERVER_ID = 0
+		self.FLAG = 0
+		self.REQ_ID = 0
+
+	def get_header_size(self):
+		# SERVER_ID, FLAG, REQ_ID, HEADER, VER, DATA_LENGTH
+		header_size = 1 + 1 + 4 + 4 + 3 + 4
+		return header_size
+
+	def get_server_id(self):
+		return self.SERVER_ID
+
+	def get_flag(self):
+		return self.FLAG
+
+	def get_request_id(self):
+		return self.REQ_ID
+
+	def send(self, socket, data):
+
+		try:
+			b_send = bytearray()
+			b_send.extend(struct.pack("!b", self.SERVER_ID))
+			b_send.extend(struct.pack("!b", self.FLAG))
+			b_send.extend(struct.pack("!i", self.REQ_ID))
+			b_send.extend(bytes(self.HEADER, "utf-8"))
+			b_send.extend(bytes(self.VER, "utf-8"))
+			b_send.extend(struct.pack("!i", len(data)))
+			b_send.extend(data)
+			b_send.extend(bytes(self.TAIL, "utf-8"))
+
+			print(b_send)
+
+			socket.send(b_send)
+		except Exception as e:
+			raise e
 
 
-SERVER_ID = struct.unpack_from("!B", data, 0)[0]
-FLAG = struct.unpack_from("!B", data, 1)[0]
-REQ_ID = struct.unpack_from("!I", data, 2)[0]
-HEADER = bytes(struct.unpack_from("!4s", data, 6)[0]).decode()
-VER = bytes(struct.unpack_from("!3s", data, 10)[0]).decode()
-DATA_LENGTH = struct.unpack_from("!I", data, 13)[0]
+	def recv(self, socket):
 
-print(SERVER_ID, FLAG, REQ_ID, HEADER, VER, DATA_LENGTH)
-len = 17
+		header_size = self.get_header_size()
+		data_size = self.recv_header(socket)
 
-SIG = bytes(struct.unpack_from("!s", data, len)[0]).decode()
-print(SIG)
-len += 1
+		if data_size > -1:
+			data = socket.recv(data_size + 4)
+			tail = bytes(struct.unpack_from("!4s", data, data_size)[0]).decode()
 
-FIELD_SIZE = struct.unpack_from("!I", data, len)[0]
-print(FIELD_SIZE)
-len += 4
+			if tail != self.TAIL:
+				raise TypeError("Error packet. invalid tail - %s" % tail)
 
-SIG = bytes(struct.unpack_from("!s", data, len)[0]).decode()
-print(SIG)
-len += 1
+			return PacketReader().parse_to_msg(data)
 
-DATA_SIZE = struct.unpack_from("!I", data, len)[0]
-print(DATA_SIZE)
-len += 4
+		return Message("DEFAULT")
 
-fmt = "!" + str(DATA_SIZE) + "s"
-DATA = bytes(struct.unpack_from(fmt, data, len)[0]).decode()
-print(DATA)
-len += DATA_SIZE
+	def recv_header(self, socket):
+		header_size = self.get_header_size()
+		header_data = socket.recv(header_size)
 
-packet = Packet()
-packet.recv(data, )
+		try:
+			self.SERVER_ID = struct.unpack_from("!b", header_data, 0)[0]
+			self.FLAG = struct.unpack_from("!b", header_data, 1)[0]
+			self.REQ_ID = struct.unpack_from("!i", header_data, 2)[0]
+
+			header = bytes(struct.unpack_from("!4s", header_data, 6)[0]).decode()
+
+			if header != self.HEADER:
+				raise TypeError("Error packet. invalid header - %s" % header)
+
+			self.VER = bytes(struct.unpack_from("!3s", header_data, 10)[0]).decode()
+			data_size = struct.unpack_from("!i", header_data, 13)[0]
+
+			return data_size
+
+		except Exception as e:
+			raise e
+
+		return -1
+
+
+
+
