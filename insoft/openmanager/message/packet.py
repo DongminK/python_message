@@ -31,7 +31,6 @@ class Packet:
 
 	def recv(self, socket):
 
-		header_size = self.get_header_size()
 		data_size = self.recv_header(socket)
 
 		if data_size > -1:

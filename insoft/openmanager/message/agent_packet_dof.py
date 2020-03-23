@@ -22,12 +22,6 @@ class DofAgentPacket(Packet):
 		header_size = 4 + 2 + 1 + 1 + 4 + 4 + 4
 		return header_size
 
-	def get_server_id(self):
-		return self.SERVER_ID
-
-	def get_flag(self):
-		return self.FLAG
-
 	def get_request_id(self):
 		return self.REQ_ID
 
@@ -54,7 +48,6 @@ class DofAgentPacket(Packet):
 
 	def recv(self, socket):
 
-		header_size = self.get_header_size()
 		data_size = self.recv_header(socket)
 
 		if data_size > -1:
@@ -74,7 +67,7 @@ class DofAgentPacket(Packet):
 
 		try:
 			header = bytes(struct.unpack_from("!4s", header_data, 0)[0]).decode()
-			ver = bytes(struct.unpack_from("!2s", header_data, 4)[0]).decode()
+			# bytes(struct.unpack_from("!2s", header_data, 4)[0]).decode() #Version
 			self.INDEX = struct.unpack_from("!b", header_data, 6)[0]
 			self.LIMIT = struct.unpack_from("!b", header_data, 7)[0]
 			self.CHANNEL_ID = struct.unpack_from("!i", header_data, 8)[0]
