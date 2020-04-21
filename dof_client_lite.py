@@ -120,9 +120,6 @@ def sendThread(sock, handlers):
             
             r_msg = handler()#.request()
 
-            if msgName == 'help':
-                continue
-
             requestId += 1
             print("[REQ]", r_msg)
 
