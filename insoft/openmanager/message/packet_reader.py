@@ -130,7 +130,7 @@ class PacketReader:
 
 					msg.set_array(field_name, rtn_array)
 
-		return msg
+		return (msg, msg_offset)
 
 	def read_int(self, data, offset):
 		rtn_int = (struct.unpack_from("!i", data, offset)[0], offset + 4)
@@ -157,18 +157,21 @@ class PacketReader:
 		bin_size = bin_sizes[0]
 		bin_offset = bin_sizes[1]
 
-		return bytes("")
+		return bin_size, bin_offset
 
 	def read_array(self, data, offset):
 		arr_sizes = self.read_int(data, offset)
 		arr_size = arr_sizes[0]
 		arr_offset = arr_sizes[1]
 
+		rtn_value = []
+
+		if arr_size == 0:
+			 return (rtn_value, arr_offset)
+
 		sigs = self.read_signature(data, arr_offset)
 		sig = sigs[0]
 		arr_offset = sigs[1]
-
-		rtn_value = []
 
 		if sig == self.packet_type.INTEGER:
 			for i in range(arr_size):

@@ -34,6 +34,12 @@ class DofClientPacket(Packet):
 	def get_request_id(self):
 		return self.REQ_ID
 
+	def set_session_id(self, sessionId):
+		self.SESSION_ID = sessionId
+
+	def set_request_id(self, requestId):
+		self.REQ_ID = requestId
+
 	def send(self, socket, data):
 
 		try:
@@ -55,7 +61,7 @@ class DofClientPacket(Packet):
 
 	def recv(self, socket):
 
-		data_size = self.recv_header(socket)
+		data_size, isMatch = self.recv_header(socket)
 
 		if data_size > -1:
 			data = socket.recv(data_size + 4)
@@ -63,8 +69,11 @@ class DofClientPacket(Packet):
 
 			if tail != self.TAIL:
 				raise TypeError("Error packet. invalid tail - %s" % tail)
-
-			return PacketReader().parse_to_msg(data)
+			
+			if isMatch == 1 or self.SESSION_ID == 0:
+				return PacketReader().parse_to_msg(data)
+			else:
+				return self.recv(socket)
 
 		return Message("DEFAULT")
 
@@ -79,19 +88,23 @@ class DofClientPacket(Packet):
 			self.INDEX = struct.unpack_from("!b", header_data, 6)[0]
 			self.LIMIT = struct.unpack_from("!b", header_data, 7)[0]
 			self.SESSION_ID = struct.unpack_from("!i", header_data, 8)[0]
-			self.REQ_ID = struct.unpack_from("!i", header_data, 12)[0]
-
+			requestId = struct.unpack_from("!i", header_data, 12)[0]
+			
 			if header != self.HEADER:
 				raise TypeError("Error packet. invalid header - %s" % header)
 
 			data_size = struct.unpack_from("!i", header_data, 16)[0]
+			isMatch = 1
 
-			return data_size
+			if self.REQ_ID != requestId:
+				isMatch = 0
+
+			return data_size, isMatch
 
 		except Exception as e:
 			raise e
 
-		return -1
+		return -1, 0
 
 
 
