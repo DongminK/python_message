@@ -6,7 +6,7 @@ from insoft.openmanager.message.agent_packet import AgentPacket
 from insoft.openmanager.message.packet_reader import PacketReader
 from insoft.openmanager.message.packet_writer import PacketWriter
 
-class Os(AgentHandler):
+class Process(AgentHandler):
 
     def setParam(self, sock, agentPacket, msgRequest):
         self.sock = sock
