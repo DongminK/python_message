@@ -40,8 +40,6 @@ class AgentPacket(Packet):
 			b_send.extend(data)
 			b_send.extend(bytes(self.TAIL, "utf-8"))
 
-			print(b_send)
-
 			socket.send(b_send)
 		except Exception as e:
 			raise e
@@ -49,7 +47,6 @@ class AgentPacket(Packet):
 
 	def recv(self, socket):
 
-		header_size = self.get_header_size()
 		data_size = self.recv_header(socket)
 
 		if data_size > -1:

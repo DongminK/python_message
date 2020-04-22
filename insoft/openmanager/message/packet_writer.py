@@ -30,7 +30,6 @@ class PacketWriter:
 		self.b_data.extend(b_float)
 
 	def write_long(self, value):
-		print("LONG", value)
 		b_long = struct.pack("!q", value)
 		self.b_data.extend(b_long)
 
